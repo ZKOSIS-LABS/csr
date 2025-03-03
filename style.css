@@ -1,0 +1,71 @@
+@import url('https://fonts.cdnfonts.com/css/copperplate');
+body {
+  margin: 0 !important;
+  overflow: hidden;
+  background-color: #000826 !important;
+}
+canvas {
+  display: block;
+  background-color: #000826 !important;
+  width: 100vw;
+  margin: 0;
+  height: 100vh;
+}
+.model-viewer {
+  position: absolute;
+  top: 0;
+  margin-top: -70px;
+  left: 0;
+  z-index: 9999999999999 !important;
+}
+@media screen and (max-width: 600px) {
+  .model-viewer {
+    display: none;
+  }
+}
+.popup-socials {
+  pointer-events: all !important;
+  z-index: 9999999999999 !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  position: absolute !important;
+  height: 90px;
+}
+.popup {
+  color: rgb(195, 195, 195);
+  border-radius: 3px;
+  transition: "transform 0.5s ease-out, opacity 0.5s ease-out";
+}
+.popup-info {
+  max-width: 40vw;
+  min-width: 40vw;
+  text-align: center;
+  transition: "transform 0.5s ease-out, opacity 0.5s ease-out";
+  font-size: 22px;
+  line-height: 27px;
+  font-weight: 300;
+  font-family: "Copperplate", sans-serif;
+
+  -webkit-box-shadow: 0px 0px 26px -4px rgba(9, 3, 176, 1);
+  -moz-box-shadow: 0px 0px 26px -4px rgba(9, 3, 176, 1);
+  box-shadow: 0px 0px 26px -4px rgba(9, 3, 176, 1);
+  background-color: rgba(0, 0, 21, 0.8);
+}
+@media screen and (max-width: 600px) {
+  .popup-info {
+    max-width: 60vw;
+    min-width: 60vw;
+    font-size: 12px;
+    line-height: 17px;
+  }
+}
+.popup-chart,
+#dexscreener-embed {
+  position: absolute !important;
+  bottom: 0 !important;
+  right: 0 !important;
+  margin-bottom: -1rem;
+  max-height: 500px;
+  margin-right: 5px;
+  width: 500px !important;
+}
