@@ -13,7 +13,7 @@ const camera = new THREE.PerspectiveCamera(
   100
 );
 // Adjusted camera position for the office interior
-camera.position.set(0, 0, 3);
+camera.position.set(0, 0, 9);
 
 const renderer = new THREE.WebGLRenderer({
   canvas: document.getElementById("scene"),
@@ -29,7 +29,7 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.1;
 
 // Convert 5° to radians (5 * Math.PI / 180)
-const verticalLimit = THREE.MathUtils.degToRad(13);
+const verticalLimit = THREE.MathUtils.degToRad(43);
 
 // Restrict the vertical rotation to a narrow band around the horizontal (π/2)
 controls.minPolarAngle = Math.PI / 2 - verticalLimit;
