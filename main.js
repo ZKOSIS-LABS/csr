@@ -7,13 +7,13 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 // ----- Scene Setup -----
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
-  55,
+  45,
   window.innerWidth / window.innerHeight,
   0.1,
   100
 );
 // Adjusted camera position for the office interior
-camera.position.set(0, 3, 3);
+camera.position.set(0, 0, 3);
 
 const renderer = new THREE.WebGLRenderer({
   canvas: document.getElementById("scene"),
