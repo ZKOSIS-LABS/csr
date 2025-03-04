@@ -39,7 +39,7 @@ controls.minDistance = 1;
 
 // Lights
 const light = new THREE.DirectionalLight(0xffffff, 2);
-light.position.set(5, 10, 5);
+light.position.set(5, 8, 5);
 scene.add(light);
 const ambientLight = new THREE.AmbientLight(0x404040, 1);
 scene.add(ambientLight);
