@@ -212,7 +212,7 @@ officeLoader.load(
 
     const minDimension = Math.min(size.x, size.y, size.z);
     controls.maxDistance = minDimension * 10.3;
-    camera.position.set(0, size.y * -0.15, minDimension * 0.5);
+    camera.position.set(0, size.y * -0.15, minDimension * .5);
 
     // ----- Additional GLB Model Loading -----
     const additionalLoader = new GLTFLoader(manager);
@@ -264,9 +264,9 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     return textMesh;
   };
 
-  createText("SOCIALS", 0x00008b, { x: 2, y: -2, z: 1 });
-  createText("CHART", 0x00008b, { x: -3.3, y: 0.5, z: 1.8 });
-  createText("INFO", 0x00008b, { x: -1, y: -1, z: -2.5 });
+  createText("SOCIALS", 0x000000, { x: 2, y: -2, z: 1 });
+  createText("CHART", 0x000000, { x: -3.3, y: 0.5, z: 1.8 });
+  createText("INFO", 0x000000, { x: -1, y: -1, z: -2.5 });
 
   // ----- 2D Popup DOM Functions for SOCIALS and CHART -----
   function getScreenPosition(object, camera) {
