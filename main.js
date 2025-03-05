@@ -45,7 +45,7 @@ manager.onError = (url) => {
 // ----- Scene Setup -----
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
-  45,
+  55,
   window.innerWidth / window.innerHeight,
   0.1,
   100
@@ -64,7 +64,7 @@ document.body.appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.1;
-const verticalLimit = THREE.MathUtils.degToRad(180);
+const verticalLimit = THREE.MathUtils.degToRad(200);
 controls.minPolarAngle = Math.PI / 2 - verticalLimit;
 controls.maxPolarAngle = Math.PI / 2 + verticalLimit;
 controls.minDistance = 1;
@@ -212,7 +212,7 @@ officeLoader.load(
 
     const minDimension = Math.min(size.x, size.y, size.z);
     controls.maxDistance = minDimension * 10.3;
-    camera.position.set(0, size.y * 0.5, minDimension * 0.5);
+    camera.position.set(0, size.y * -0.15, minDimension * 0.5);
 
     // ----- Additional GLB Model Loading -----
     const additionalLoader = new GLTFLoader(manager);
@@ -251,9 +251,9 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
   const createText = (text, color, position) => {
     const textGeometry = new TextGeometry(text, {
       font: font,
-      size: 0.1,
+      size: 0.2,
       height: 0.1,
-      depth: 0.1,
+      depth: 0.2,
     });
     const textMaterial = new THREE.MeshBasicMaterial({ color });
     const textMesh = new THREE.Mesh(textGeometry, textMaterial);
@@ -264,9 +264,9 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     return textMesh;
   };
 
-  createText("SOCIALS", 0x00008b, { x: 2, y: -2, z: 3 });
-  createText("CHART", 0x00008b, { x: 3, y: -2.8, z: 0.5 });
-  createText("INFO", 0x00008b, { x: -1, y: -1, z: 2 });
+  createText("SOCIALS", 0x00008b, { x: 2, y: -2, z: 1 });
+  createText("CHART", 0x00008b, { x: -3.3, y: 0.5, z: 1.8 });
+  createText("INFO", 0x00008b, { x: -1, y: -1, z: -2.5 });
 
   // ----- 2D Popup DOM Functions for SOCIALS and CHART -----
   function getScreenPosition(object, camera) {
@@ -441,7 +441,7 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     canvas.width = 512;
     canvas.height = 256;
     const context = canvas.getContext("2d");
-    context.fillStyle = "rgba(0, 0, 0, 0.65)";
+    context.fillStyle = "rgb(0, 0, 0)";
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = "#fff";
     context.font = "17px  Copperplate, sans-serif";
@@ -455,7 +455,7 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       transparent: true,
     });
     const plane = new THREE.Mesh(geometry, material);
-    plane.rotation.y = Math.PI;
+    
     return plane;
   }
 
@@ -468,8 +468,8 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     object.getWorldPosition(pos);
     infoPopup3D.position.copy(pos);
     // Increased vertical offset for higher positioning
-    infoPopup3D.position.y += 1.1;
-    infoPopup3D.position.z += 1.1;
+    infoPopup3D.position.y += 0.8;
+    infoPopup3D.position.z += 0.1;
   }
 
   // ----- Animation Loop -----
@@ -486,7 +486,7 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     forward.y = 0;
     forward.normalize();
     const right = new THREE.Vector3();
-    right.crossVectors(forward, new THREE.Vector3(0, 2, 0)).normalize();
+    right.crossVectors(forward, new THREE.Vector3(0, 0, 0)).normalize();
 
     if (keys.w)
       camera.position.add(forward.clone().multiplyScalar(speed * delta));
@@ -546,8 +546,8 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       hoveredObject.getWorldPosition(pos);
       infoPopup3D.position.copy(pos);
       // Update offset here as well for consistent higher positioning
-      infoPopup3D.position.y += 1.1;
-      infoPopup3D.position.z += 1.1;
+      infoPopup3D.position.y += 0.8;
+      infoPopup3D.position.z += 0.1;
     }
     renderer.render(scene, camera);
   }
