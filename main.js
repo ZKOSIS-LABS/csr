@@ -53,7 +53,7 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   100
 );
-camera.position.set(2, 2, 2);
+camera.position.set(0,0,0);
 
 const renderer = new THREE.WebGLRenderer({
   canvas: document.getElementById("scene"),
@@ -259,7 +259,7 @@ officeLoader.load(
       (gltf) => {
         const cryptizoModel = gltf.scene;
         cryptizoModel.scale.set(0.8, 0.8, 0.8);
-        cryptizoModel.position.set(2.7, 4.7, -0.2);
+        cryptizoModel.position.set(3.5, 4.2, -0.2);
         cryptizoModel.rotation.y = -Math.PI / 2; // adjust scale if needed
         // Place cryptizoModel in front of additionalModel.
         // Assuming additionalModel’s local forward is along negative z, we offset by 2 units.
@@ -301,9 +301,9 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     return textMesh;
   };
 
-  createText("SOCIALS", 0x00008ff, { x: 3, y: -2.5, z: -0.6 });
-  createText("CHART", 0x0000ff, { x: 5, y: 1, z: -0.4 });
-  createText("INFO", 0x0000ff, { x: 4, y: -0.5, z: -0.4 });
+  createText("SOCIALS", 0x111184, { x: 3, y: -2.5, z: -0.6 });
+  createText("CHART", 0x111184, { x: 5, y: 1, z: -0.4 });
+  createText("INFO", 0x111184, { x: 4, y: -0.5, z: -0.4 });
 
   // ----- 2D Popup DOM Functions for SOCIALS and INFO -----
   function getScreenPosition(object, camera) {
@@ -410,12 +410,12 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
   function createInfoPopup3D() {
     const canvas = document.createElement("canvas");
     canvas.width = 512;
-    canvas.height = 256;
+    canvas.height = 336;
     const context = canvas.getContext("2d");
     context.fillStyle = "rgba(0, 0, 0, 0.81)";
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = "#fff";
-    context.font = "17px Copperplate, sans-serif";
+    context.font = "23px Copperplate, sans-serif";
     const infoText =
       "Crypto Strategic Rewards (CSR) is a pioneering rewards token launching on the Solana blockchain, designed to empower a vibrant community of crypto enthusiasts and investors. Leveraging Solana’s unparalleled speed and low transaction fees, CSR redefines digital incentives by seamlessly integrating decentralized finance with innovative tokenomics.";
     wrapText(context, infoText, 10, 30, canvas.width - 20, 25);
@@ -439,6 +439,7 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     object.getWorldPosition(pos);
     infoPopup3D.position.copy(pos);
     infoPopup3D.position.y += 2.9;
+        infoPopup3D.position.x += 2.9;
   }
 
   // ----- New: 2D CHART Popup as a Fixed DOM Element -----
@@ -551,7 +552,9 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       const pos = new THREE.Vector3();
       hoveredObject.getWorldPosition(pos);
       infoPopup3D.position.copy(pos);
-      infoPopup3D.position.y += 0.9;
+      infoPopup3D.position.y += -0.3;
+              infoPopup3D.position.x += -1.3;
+                            infoPopup3D.position.z += 0.3;
     }
     // ----- Coin Spawning and Update -----
     const now = performance.now();
@@ -563,7 +566,7 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
         const dir = new THREE.Vector3();
         emitter.getWorldDirection(dir);
         dir.x += (Math.random() - 0.5) * 0.03;
-        dir.y += (Math.random() - 0.5) * 0.03;
+        dir.y += (Math.random() - 0.5) * 0.3;
         dir.z += (Math.random() - 0.5) * 0.5;
         dir.normalize();
         coin.velocity = dir.multiplyScalar(1 + Math.random() * 2);
