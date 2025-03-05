@@ -289,7 +289,7 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       font: font,
       size: 0.2,
       height: 0.1,
-      depth: 0.2,
+      depth: 0.1,
     });
     const textMaterial = new THREE.MeshBasicMaterial({ color });
     const textMesh = new THREE.Mesh(textGeometry, textMaterial);
