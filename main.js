@@ -441,10 +441,10 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     canvas.width = 512;
     canvas.height = 256;
     const context = canvas.getContext("2d");
-    context.fillStyle = "rgba(0, 0, 0, 0.9)";
+    context.fillStyle = "rgba(0, 0, 0, 0.65)";
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = "#fff";
-    context.font = "20px sans-serif";
+    context.font = "17px  Copperplate, sans-serif";
     const infoText =
       "Crypto Strategic Rewards (CSR) is a pioneering rewards token launching on the Solana blockchain, designed to empower a vibrant community of crypto enthusiasts and investors. Leveraging Solana’s unparalleled speed and low transaction fees, CSR redefines digital incentives by seamlessly integrating decentralized finance with innovative tokenomics.";
     wrapText(context, infoText, 10, 30, canvas.width - 20, 25);
@@ -456,6 +456,7 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     });
     const plane = new THREE.Mesh(geometry, material);
     plane.rotation.y = Math.PI;
+
     return plane;
   }
 
@@ -467,7 +468,7 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     const pos = new THREE.Vector3();
     object.getWorldPosition(pos);
     infoPopup3D.position.copy(pos);
-    infoPopup3D.position.y += 0.5;
+    infoPopup3D.position.y += 2.9;
   }
 
   // ----- Animation Loop -----
