@@ -441,7 +441,7 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     canvas.width = 512;
     canvas.height = 256;
     const context = canvas.getContext("2d");
-    context.fillStyle = "rgba(34,34,34,0.9)";
+    context.fillStyle = "rgba(0, 0, 0, 0.9)";
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = "#fff";
     context.font = "20px sans-serif";
