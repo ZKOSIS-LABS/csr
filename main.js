@@ -95,7 +95,7 @@ renderer.domElement.addEventListener(
 // ----- 3D Model Loading (Office Model) -----
 const loader = new GLTFLoader();
 loader.load(
-  "/assets/offices.glb", // New office model file from Blender
+  "/assets/ofisi.glb", // New office model file from Blender
   (gltf) => {
     const model = gltf.scene;
     scene.add(model);
