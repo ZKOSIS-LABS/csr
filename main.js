@@ -89,25 +89,7 @@ const ambientLight = new THREE.AmbientLight(0xffffff, 1);
 scene.add(ambientLight);
 
 // ----- Video Plane Setup -----
-const video = document.createElement("video");
-video.src = "/assets/video.mp4"; // Replace with your video file path
-video.loop = true;
-video.muted = true; // Autoplay requires muted video
-video.play();
 
-const videoTexture = new THREE.VideoTexture(video);
-videoTexture.minFilter = THREE.LinearFilter;
-videoTexture.magFilter = THREE.LinearFilter;
-videoTexture.format = THREE.RGBFormat;
-
-const videoGeometry = new THREE.PlaneGeometry(4, 2.25);
-const videoMaterial = new THREE.MeshBasicMaterial({
-  map: videoTexture,
-  side: THREE.DoubleSide,
-});
-const videoPlane = new THREE.Mesh(videoGeometry, videoMaterial);
-videoPlane.position.set(0, 2, -5);
-scene.add(videoPlane);
 
 // ----- Global Variables for Popups, Models, and Coins -----
 const raycaster = new THREE.Raycaster();
