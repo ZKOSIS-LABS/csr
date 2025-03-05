@@ -13,7 +13,6 @@ const camera = new THREE.PerspectiveCamera(
   100
 );
 camera.position.set(2, 2, 2);
-// Removed fixed rotation for free movement
 
 const renderer = new THREE.WebGLRenderer({
   canvas: document.getElementById("scene"),
@@ -27,7 +26,6 @@ document.body.appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.1;
-// Using a 180° vertical limit (no horizontal restriction)
 const verticalLimit = THREE.MathUtils.degToRad(180);
 controls.minPolarAngle = Math.PI / 2 - verticalLimit;
 controls.maxPolarAngle = Math.PI / 2 + verticalLimit;
@@ -39,6 +37,30 @@ light.position.set(1, 4, 1);
 scene.add(light);
 const ambientLight = new THREE.AmbientLight(0xffffff, 1);
 scene.add(ambientLight);
+
+// ----- Video Plane Setup -----
+// Create a video element and configure it
+const video = document.createElement("video");
+video.src = "/assets/video.mp4"; // Replace with your video file path
+video.loop = true;
+video.muted = true; // Autoplay generally requires muted video
+video.play();
+
+// Create a VideoTexture from the video element
+const videoTexture = new THREE.VideoTexture(video);
+videoTexture.minFilter = THREE.LinearFilter;
+videoTexture.magFilter = THREE.LinearFilter;
+videoTexture.format = THREE.RGBFormat;
+
+// Create a plane geometry with a 16:9 aspect ratio (adjust size as needed)
+const videoGeometry = new THREE.PlaneGeometry(4, 2.25);
+const videoMaterial = new THREE.MeshBasicMaterial({
+  map: videoTexture,
+  side: THREE.DoubleSide,
+});
+const videoPlane = new THREE.Mesh(videoGeometry, videoMaterial);
+videoPlane.position.set(0, 1, -5.5); // Position the video plane in the scene
+scene.add(videoPlane);
 
 // ----- Global Variables for Hover, Popup, and Models -----
 const raycaster = new THREE.Raycaster();
@@ -154,31 +176,26 @@ officeLoader.load(
 
     // Update bounding box after centering:
     modelBox = new THREE.Box3().setFromObject(officeModel);
-    // Expand the bounding box to give the camera more freedom (increase by 1 unit in all directions)
     modelBox.expandByScalar(1000000);
 
     const minDimension = Math.min(size.x, size.y, size.z);
     controls.maxDistance = minDimension * 10.3;
     camera.position.set(0, size.y * 0.5, minDimension * 0.5);
-    
+
     // ----- Additional GLB Model Loading -----
-    // This model will be integrated into the office interior.
     const additionalLoader = new GLTFLoader();
     additionalLoader.load(
       "/assets/sitdownfoo.glb", // Replace with your GLB model's path
       (gltf) => {
         const additionalModel = gltf.scene;
-        // Adjust scale, position, and rotation
         additionalModel.scale.set(2, 2, 2);
         additionalModel.position.set(3, 1.1, -0.4);
         additionalModel.rotation.y = -Math.PI / 2; // Rotate 90° to the right
 
-        // Add a dedicated light to illuminate the additional model
         const modelLight = new THREE.PointLight(0xffffff, 1, 10);
-        modelLight.position.set(3, 4.1, 0.4); // Adjust as needed
+        modelLight.position.set(3, 4.1, 0.4);
         additionalModel.add(modelLight);
 
-        // Parent the additional model to the office model for integration
         officeModel.add(additionalModel);
         console.log("Additional Model Integrated with dedicated light!");
       },
@@ -346,7 +363,6 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       }
       currentPopupTitle = title;
     }
-    // Set fixed positions for SOCIALS and CHART; dynamic for others.
     if (title === "CHART") {
       popupDom.style.right = "20px";
       popupDom.style.bottom = "20px";
@@ -373,13 +389,11 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     const words = text.split(" ");
     let line = "";
     for (let n = 0; n < words.length; n++) {
-      // biome-ignore lint/style/useTemplate: <explanation>
       const testLine = line + words[n] + " ";
       const metrics = ctx.measureText(testLine);
       const testWidth = metrics.width;
       if (testWidth > maxWidth && n > 0) {
         ctx.fillText(line, x, y);
-        // biome-ignore lint/style/useTemplate: <explanation>
         line = words[n] + " ";
         y += lineHeight;
       } else {
@@ -394,10 +408,8 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     canvas.width = 512;
     canvas.height = 256;
     const context = canvas.getContext("2d");
-    // Draw background
     context.fillStyle = "rgba(34,34,34,0.9)";
     context.fillRect(0, 0, canvas.width, canvas.height);
-    // Draw text
     context.fillStyle = "#fff";
     context.font = "20px sans-serif";
     const infoText =
@@ -410,7 +422,6 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       transparent: true,
     });
     const plane = new THREE.Mesh(geometry, material);
-    // Rotate the plane 180° around the Y-axis
     plane.rotation.y = Math.PI;
     return plane;
   }
@@ -420,27 +431,24 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       infoPopup3D = createInfoPopup3D();
       scene.add(infoPopup3D);
     }
-    // Position the 3D INFO popup near the INFO title's world position.
     const pos = new THREE.Vector3();
     object.getWorldPosition(pos);
     infoPopup3D.position.copy(pos);
-    infoPopup3D.position.y += 0.5; // Adjust vertical offset as needed
+    infoPopup3D.position.y += 0.5;
   }
 
   // ----- Animation Loop -----
   let lastTime = performance.now();
   function animate() {
     requestAnimationFrame(animate);
-    // WASD movement update using world-space relative to camera's orientation:
     const currentTime = performance.now();
-    const delta = (currentTime - lastTime) / 1000; // seconds
+    const delta = (currentTime - lastTime) / 1000;
     lastTime = currentTime;
-    const speed = 4; // Increased speed for more freedom
+    const speed = 4;
 
-    // Calculate forward and right vectors based on camera direction.
     const forward = new THREE.Vector3();
     camera.getWorldDirection(forward);
-    forward.y = 0; // remove vertical component for horizontal movement
+    forward.y = 0;
     forward.normalize();
     const right = new THREE.Vector3();
     right.crossVectors(forward, new THREE.Vector3(0, 2, 0)).normalize();
@@ -454,7 +462,6 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     if (keys.d)
       camera.position.add(right.clone().multiplyScalar(-speed * delta));
 
-    // Clamp camera position within the office model's bounding box.
     if (modelBox) {
       camera.position.x = THREE.MathUtils.clamp(
         camera.position.x,
@@ -473,11 +480,9 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       );
     }
 
-    // biome-ignore lint/complexity/noForEach: <explanation>
     textObjects.forEach((txt) => txt.lookAt(camera.position));
     controls.update();
 
-    // Raycaster for title detection (for desktop)
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(textObjects);
     if (intersects.length > 0) {
@@ -500,7 +505,6 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
         }
       }
     }
-    // For INFO, update its 3D popup position continuously.
     if (infoPopup3D && hoveredObject && hoveredObject.name === "INFO") {
       const pos = new THREE.Vector3();
       hoveredObject.getWorldPosition(pos);
