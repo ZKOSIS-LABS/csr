@@ -3,6 +3,10 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import {
+  CSS3DRenderer,
+  CSS3DObject,
+} from "three/examples/jsm/renderers/CSS3DRenderer";
 
 // ----- Loading Screen Setup -----
 const loadingScreen = document.createElement("div");
@@ -38,14 +42,13 @@ manager.onLoad = () => {
   }, 1000);
 };
 manager.onError = (url) => {
-  // biome-ignore lint/style/useTemplate: <explanation>
-  console.error("Error loading: " + url);
+  console.error(`Error loading: ${url}`);
 };
 
 // ----- Scene Setup -----
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
-  55,
+  45,
   window.innerWidth / window.innerHeight,
   0.1,
   100
@@ -55,16 +58,25 @@ camera.position.set(2, 2, 2);
 const renderer = new THREE.WebGLRenderer({
   canvas: document.getElementById("scene"),
   antialias: true,
+  preserveDrawingBuffer: true,
 });
 renderer.setSize(window.innerWidth, window.innerHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 document.body.appendChild(renderer.domElement);
 
+// CSS3DRenderer remains for any other DOM elements if needed
+const cssRenderer = new CSS3DRenderer();
+cssRenderer.setSize(window.innerWidth, window.innerHeight);
+cssRenderer.domElement.style.position = "absolute";
+cssRenderer.domElement.style.top = "0";
+cssRenderer.domElement.style.pointerEvents = "none";
+document.body.appendChild(cssRenderer.domElement);
+
 // Orbit Controls
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.1;
-const verticalLimit = THREE.MathUtils.degToRad(200);
+const verticalLimit = THREE.MathUtils.degToRad(180);
 controls.minPolarAngle = Math.PI / 2 - verticalLimit;
 controls.maxPolarAngle = Math.PI / 2 + verticalLimit;
 controls.minDistance = 1;
@@ -80,7 +92,7 @@ scene.add(ambientLight);
 const video = document.createElement("video");
 video.src = "/assets/video.mp4"; // Replace with your video file path
 video.loop = true;
-video.muted = true; // Autoplay requires muted video in most browsers
+video.muted = true; // Autoplay requires muted video
 video.play();
 
 const videoTexture = new THREE.VideoTexture(video);
@@ -97,18 +109,32 @@ const videoPlane = new THREE.Mesh(videoGeometry, videoMaterial);
 videoPlane.position.set(0, 2, -5);
 scene.add(videoPlane);
 
-// ----- Global Variables for Hover, Popup, and Models -----
+// ----- Global Variables for Popups, Models, and Coins -----
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 const textObjects = [];
 
 let hoveredObject = null;
 let currentPopupTitle = "";
-let popupDom = null; // For DOM-based popups (SOCIALS & CHART)
+let popupDom = null; // For SOCIALS & INFO 2D popups
 let infoPopup3D = null; // For 3D INFO popup as a plane
 
-let modelBox = null; // Bounding box for the office model
-let officeModel = null; // Global office model reference
+// New: For CHART popup as a 2D DOM element
+let chartPopupDom = null;
+
+let modelBox = null;
+let officeModel = null;
+
+// --- Coin System Globals ---
+let coins = [];
+let lastCoinSpawnTime = performance.now();
+const coinGeometry = new THREE.CylinderGeometry(0.05, 0.05, 0.01, 32);
+const coinMaterial = new THREE.MeshStandardMaterial({
+  color: 0xffd700,
+  metalness: 0.98,
+  roughness: 0.32,
+});
+let coinEmitters = [];
 
 // ----- WASD Movement Setup -----
 const keys = { w: false, a: false, s: false, d: false };
@@ -168,6 +194,9 @@ renderer.domElement.addEventListener(
             document.body.removeChild(popupDom);
             popupDom = null;
           }
+        } else if (hoveredObject.name === "CHART") {
+          // Use the new 2D DOM popup for CHART
+          showChartPopupDom();
         } else {
           if (infoPopup3D) {
             scene.remove(infoPopup3D);
@@ -199,20 +228,16 @@ officeLoader.load(
   (gltf) => {
     officeModel = gltf.scene;
     scene.add(officeModel);
-
     modelBox = new THREE.Box3().setFromObject(officeModel);
     const size = modelBox.getSize(new THREE.Vector3());
     console.log("Office Model Loaded!", size);
-
     const center = modelBox.getCenter(new THREE.Vector3());
     officeModel.position.sub(center);
-
     modelBox = new THREE.Box3().setFromObject(officeModel);
     modelBox.expandByScalar(1000000);
-
     const minDimension = Math.min(size.x, size.y, size.z);
     controls.maxDistance = minDimension * 10.3;
-    camera.position.set(0, size.y * -0.15, minDimension * .5);
+    camera.position.set(0, size.y * 0.5, minDimension * 0.5);
 
     // ----- Additional GLB Model Loading -----
     const additionalLoader = new GLTFLoader(manager);
@@ -230,6 +255,15 @@ officeLoader.load(
 
         officeModel.add(additionalModel);
         console.log("Additional Model Integrated with dedicated light!");
+
+        // --- Set up coin emitters on the money guns ---
+        const leftEmitter = new THREE.Object3D();
+        leftEmitter.position.set(-0.13, 0.38, 0.36); // adjust offset for left gun
+        additionalModel.add(leftEmitter);
+        const rightEmitter = new THREE.Object3D();
+        rightEmitter.position.set(0.2, 0.38, 0.36); // adjust offset for right gun
+        additionalModel.add(rightEmitter);
+        coinEmitters.push(leftEmitter, rightEmitter);
       },
       undefined,
       (error) => {
@@ -264,11 +298,11 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     return textMesh;
   };
 
-  createText("SOCIALS", 0x000000, { x: 2, y: -2, z: 1 });
-  createText("CHART", 0x000000, { x: -3.3, y: 0.5, z: 1.8 });
-  createText("INFO", 0x000000, { x: -1, y: -1, z: -2.5 });
+  createText("SOCIALS", 0x0000800, { x: 2, y: -2, z: 3 });
+  createText("CHART", 0x000000, { x: 3, y: -2.8, z: 0.5 });
+  createText("INFO", 0x000000, { x: -1, y: -1, z: 2 });
 
-  // ----- 2D Popup DOM Functions for SOCIALS and CHART -----
+  // ----- 2D Popup DOM Functions for SOCIALS and INFO -----
   function getScreenPosition(object, camera) {
     const vector = new THREE.Vector3();
     object.getWorldPosition(vector);
@@ -292,8 +326,6 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     div.classList.add("popup");
     if (title === "SOCIALS") {
       div.classList.add("popup-socials");
-    } else if (title === "CHART") {
-      div.classList.add("popup-chart");
     } else if (title === "INFO") {
       div.classList.add("popup-info");
     }
@@ -310,48 +342,19 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       div.innerHTML = `
         <p>Crypto Strategic Rewards (CSR) is a pioneering rewards token launching on the Solana blockchain, designed to empower a vibrant community of crypto enthusiasts and investors. Leveraging Solana’s unparalleled speed and low transaction fees, CSR redefines digital incentives by seamlessly integrating decentralized finance with innovative tokenomics.</p>
       `;
-    } else if (title === "CHART") {
-      div.innerHTML = `
-        <style>
-          #dexscreener-embed {
-            position: relative;
-            width: 100%;
-            min-height: 300px;
-            min-width: 300px;
-            padding-bottom: 125%;
-          }
-          @media(min-width: 1400px) {
-            #dexscreener-embed {
-              padding-bottom: 65%;
-            }
-          }
-          #dexscreener-embed iframe {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            top: 0;
-            left: 0;
-            border: 0;
-          }
-        </style>
-        <div id="dexscreener-embed">
-          <iframe src="https://dexscreener.com/solana/Czfq3xZZDmsdGdUyrNLtRhGc47cXcZtLG4crryfu44zE?embed=1&loadChartSettings=0&trades=0&tabs=0&info=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15"></iframe>
-        </div>
-      `;
-    } else {
-      div.innerHTML = `<p>Popup for ${title}</p>`;
     }
     return div;
   }
 
   function showPopup(title, screenPos) {
+    if (title === "CHART") return; // CHART is now handled separately as a 2D DOM element
     if (!popupDom) {
       popupDom = createPopupDom(title);
       document.body.appendChild(popupDom);
       currentPopupTitle = title;
     } else if (currentPopupTitle !== title) {
       popupDom.innerHTML = "";
-      popupDom.classList.remove("popup-socials", "popup-info", "popup-chart");
+      popupDom.classList.remove("popup-socials", "popup-info");
       if (title === "SOCIALS") {
         popupDom.classList.add("popup-socials");
         popupDom.innerHTML = `
@@ -362,44 +365,10 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
             <img src="/X.png" alt="Info Image" style="width:80px; height:auto;">
           </a>
         `;
-      } else if (title === "CHART") {
-        popupDom.classList.add("popup-chart");
-        popupDom.innerHTML = `
-          <style>
-            #dexscreener-embed {
-              position: relative;
-              width: 100%;
-              min-height: 300px;
-              min-width: 300px;
-              padding-bottom: 125%;
-            }
-            @media(min-width: 1400px) {
-              #dexscreener-embed {
-                padding-bottom: 65%;
-              }
-            }
-            #dexscreener-embed iframe {
-              position: absolute;
-              width: 100%;
-              height: 100%;
-              top: 0;
-              left: 0;
-              border: 0;
-            }
-          </style>
-          <div id="dexscreener-embed">
-            <iframe src="https://dexscreener.com/solana/Czfq3xZZDmsdGdUyrNLtRhGc47cXcZtLG4crryfu44zE?embed=1&loadChartSettings=0&trades=0&tabs=0&info=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15"></iframe>
-          </div>
-        `;
       }
       currentPopupTitle = title;
     }
-    if (title === "CHART") {
-      popupDom.style.right = "20px";
-      popupDom.style.bottom = "20px";
-      popupDom.style.left = "";
-      popupDom.style.top = "";
-    } else if (title === "SOCIALS") {
+    if (title === "SOCIALS") {
       popupDom.style.left = "20px";
       popupDom.style.bottom = "20px";
       popupDom.style.right = "";
@@ -426,7 +395,6 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       const testWidth = metrics.width;
       if (testWidth > maxWidth && n > 0) {
         ctx.fillText(line, x, currentY);
-        // biome-ignore lint/style/useTemplate: <explanation>
         line = words[n] + " ";
         currentY += lineHeight;
       } else {
@@ -441,10 +409,10 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     canvas.width = 512;
     canvas.height = 256;
     const context = canvas.getContext("2d");
-    context.fillStyle = "rgb(0, 0, 0)";
+    context.fillStyle = "rgba(0, 0, 0, 0.65)";
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = "#fff";
-    context.font = "17px  Copperplate, sans-serif";
+    context.font = "17px Copperplate, sans-serif";
     const infoText =
       "Crypto Strategic Rewards (CSR) is a pioneering rewards token launching on the Solana blockchain, designed to empower a vibrant community of crypto enthusiasts and investors. Leveraging Solana’s unparalleled speed and low transaction fees, CSR redefines digital incentives by seamlessly integrating decentralized finance with innovative tokenomics.";
     wrapText(context, infoText, 10, 30, canvas.width - 20, 25);
@@ -455,7 +423,7 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       transparent: true,
     });
     const plane = new THREE.Mesh(geometry, material);
-    
+    plane.rotation.y = Math.PI;
     return plane;
   }
 
@@ -467,9 +435,43 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     const pos = new THREE.Vector3();
     object.getWorldPosition(pos);
     infoPopup3D.position.copy(pos);
-    // Increased vertical offset for higher positioning
-    infoPopup3D.position.y += 0.8;
-    infoPopup3D.position.z += 0.1;
+    infoPopup3D.position.y += 2.9;
+  }
+
+  // ----- New: 2D CHART Popup as a Fixed DOM Element -----
+  function createChartPopupDom() {
+    const div = document.createElement("div");
+    div.id = "chartPopupDom";
+    Object.assign(div.style, {
+      position: "fixed",
+      bottom: "20px",
+      right: "20px",
+      width: "400px",
+      height: "300px",
+      backgroundColor: "#fff",
+      border: "1px solid #ccc",
+      padding: "10px",
+      zIndex: "1000",
+      transform: "scale(0)",
+      opacity: "0",
+      transition: "transform 0.5s ease-out, opacity 0.5s ease-out",
+    });
+    div.innerHTML = `
+      <iframe src="https://dexscreener.com/solana/Czfq3xZZDmsdGdUyrNLtRhGc47cXcZtLG4crryfu44zE?embed=1&loadChartSettings=0&trades=0&tabs=0&info=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15"
+        style="width:100%; height:100%; border:0;"></iframe>
+    `;
+    return div;
+  }
+
+  function showChartPopupDom() {
+    if (!chartPopupDom) {
+      chartPopupDom = createChartPopupDom();
+      document.body.appendChild(chartPopupDom);
+    }
+    // Force reflow to trigger CSS transition
+    chartPopupDom.getBoundingClientRect();
+    chartPopupDom.style.transform = "scale(1)";
+    chartPopupDom.style.opacity = "1";
   }
 
   // ----- Animation Loop -----
@@ -480,13 +482,12 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     const delta = (currentTime - lastTime) / 1000;
     lastTime = currentTime;
     const speed = 4;
-
     const forward = new THREE.Vector3();
     camera.getWorldDirection(forward);
     forward.y = 0;
     forward.normalize();
     const right = new THREE.Vector3();
-    right.crossVectors(forward, new THREE.Vector3(0, 0, 0)).normalize();
+    right.crossVectors(forward, new THREE.Vector3(0, 2, 0)).normalize();
 
     if (keys.w)
       camera.position.add(forward.clone().multiplyScalar(speed * delta));
@@ -515,7 +516,6 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       );
     }
 
-    // biome-ignore lint/complexity/noForEach: <explanation>
     textObjects.forEach((txt) => txt.lookAt(camera.position));
     controls.update();
 
@@ -532,6 +532,9 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
             document.body.removeChild(popupDom);
             popupDom = null;
           }
+        } else if (intersected.name === "CHART") {
+          // Call new 2D CHART popup DOM
+          showChartPopupDom();
         } else {
           if (infoPopup3D) {
             scene.remove(infoPopup3D);
@@ -545,10 +548,36 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       const pos = new THREE.Vector3();
       hoveredObject.getWorldPosition(pos);
       infoPopup3D.position.copy(pos);
-      // Update offset here as well for consistent higher positioning
-      infoPopup3D.position.y += 0.8;
-      infoPopup3D.position.z += 0.1;
+      infoPopup3D.position.y += 0.9;
     }
+    // ----- Coin Spawning and Update -----
+    const now = performance.now();
+    if (now - lastCoinSpawnTime > 300 && coinEmitters.length > 0) {
+      // biome-ignore lint/complexity/noForEach: <explanation>
+      coinEmitters.forEach((emitter) => {
+        const coin = new THREE.Mesh(coinGeometry, coinMaterial);
+        emitter.getWorldPosition(coin.position);
+        const dir = new THREE.Vector3();
+        emitter.getWorldDirection(dir);
+        dir.x += (Math.random() - 0.5) * 0.03;
+        dir.y += (Math.random() - 0.5) * 0.03;
+        dir.z += (Math.random() - 0.5) * 0.5;
+        dir.normalize();
+        coin.velocity = dir.multiplyScalar(1 + Math.random() * 2);
+        coins.push(coin);
+        scene.add(coin);
+      });
+      lastCoinSpawnTime = now;
+    }
+    for (let i = coins.length - 1; i >= 0; i--) {
+      const coin = coins[i];
+      coin.position.addScaledVector(coin.velocity, delta);
+      if (coin.position.distanceTo(camera.position) > 40) {
+        scene.remove(coin);
+        coins.splice(i, 1);
+      }
+    }
+
     renderer.render(scene, camera);
   }
   animate();
