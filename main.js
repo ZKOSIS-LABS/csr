@@ -219,8 +219,18 @@ officeLoader.load(
     modelBox.expandByScalar(1000000);
     const minDimension = Math.min(size.x, size.y, size.z);
     controls.maxDistance = minDimension * 0.3;
-    camera.position.set(0, size.y * 0.5, minDimension * 0.5);
-
+    camera.position.set(0, size.y * 0.0001, minDimension / 2000 + 2);
+    // Rotate camera 45° clo4ckwise around the scene’s center
+    const target = new THREE.Vector3(0, 0, 0); // Adjust if your center is different
+    const offset = camera.position.clone().sub(target);
+    const spherical = new THREE.Spherical();
+    spherical.setFromVector3(offset);
+    spherical.theta += THREE.MathUtils.degToRad(-90); // Rotate by 45 degrees
+    offset.setFromSpherical(spherical);
+    camera.position.copy(target).add(offset);
+    camera.lookAt(target);
+    controls.target.copy(target);
+    controls.update();
     // ----- Additional GLB Model Loading -----
     const additionalLoader = new GLTFLoader(manager);
     additionalLoader.load(
