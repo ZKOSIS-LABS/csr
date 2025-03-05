@@ -12,7 +12,6 @@ const camera = new THREE.PerspectiveCamera(
   0.1,
   100
 );
-// Adjusted camera position for the office interior
 camera.position.set(0, 0, 9);
 
 const renderer = new THREE.WebGLRenderer({
@@ -28,38 +27,38 @@ const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.1;
 
-// Convert 5° to radians (5 * Math.PI / 180)
-const verticalLimit = THREE.MathUtils.degToRad(90);
-
-// Restrict the vertical rotation to a narrow band around the horizontal (π/2)
+// Using a 180° vertical limit (no horizontal restriction)
+const verticalLimit = THREE.MathUtils.degToRad(180);
 controls.minPolarAngle = Math.PI / 2 - verticalLimit;
 controls.maxPolarAngle = Math.PI / 2 + verticalLimit;
-// Set minDistance; maxDistance will be defined after loading the office model.
 controls.minDistance = 1;
 
 // Lights
 const light = new THREE.DirectionalLight(0xffffff, 2);
-light.position.set(5, 8, 5);
+light.position.set(1, 4, 1);
 scene.add(light);
-const ambientLight = new THREE.AmbientLight(0x404040, 1);
+const ambientLight = new THREE.AmbientLight(0xffffff, 1);
 scene.add(ambientLight);
 
-// ----- Global Variables for Hover Detection and 2D Popup -----
+// ----- Global Variables for Hover, Popup, and Models -----
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
-const textObjects = []; // Stores the 3D title meshes
+const textObjects = [];
 
 let hoveredObject = null;
 let currentPopupTitle = "";
 let popupDom = null;
 
-// Update mouse vector for desktop using mousemove on the window
+let modelBox = null; // Bounding box for the office model
+let officeModel = null; // Global office model reference
+
+// Update mouse vector for desktop
 window.addEventListener("mousemove", (event) => {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 });
 
-// For mobile: attach touch events to the canvas
+// For mobile: attach touch events
 renderer.domElement.addEventListener(
   "touchstart",
   (event) => {
@@ -67,7 +66,6 @@ renderer.domElement.addEventListener(
       const touch = event.touches[0];
       mouse.x = (touch.clientX / window.innerWidth) * 2 - 1;
       mouse.y = -(touch.clientY / window.innerHeight) * 2 + 1;
-      // Trigger raycasting on touchstart
       raycaster.setFromCamera(mouse, camera);
       const intersects = raycaster.intersectObjects(textObjects);
       if (intersects.length > 0) {
@@ -92,29 +90,54 @@ renderer.domElement.addEventListener(
   false
 );
 
-// ----- 3D Model Loading (Office Model) -----
-const loader = new GLTFLoader();
-loader.load(
-  "/assets/ofisi.glb", // New office model file from Blender
+// ----- Office Model Loading -----
+const officeLoader = new GLTFLoader();
+officeLoader.load(
+  "/assets/ofisi.glb", // Office model path
   (gltf) => {
-    const model = gltf.scene;
-    scene.add(model);
-    // Compute the bounding box of the office interior
-    const box = new THREE.Box3().setFromObject(model);
-    const size = box.getSize(new THREE.Vector3());
+    officeModel = gltf.scene;
+    scene.add(officeModel);
+
+    // Compute the bounding box for the office interior
+    modelBox = new THREE.Box3().setFromObject(officeModel);
+    const size = modelBox.getSize(new THREE.Vector3());
     console.log("Office Model Loaded!", size);
 
-    // Optionally center the office model
-    const center = box.getCenter(new THREE.Vector3());
-    model.position.sub(center);
+    // Center the office model
+    const center = modelBox.getCenter(new THREE.Vector3());
+    officeModel.position.sub(center);
 
-    // Set camera maxDistance based on office interior dimensions.
-    // Here we use 80% of the smallest interior dimension to restrict the zoom.
+    // Set camera limits based on interior dimensions
     const minDimension = Math.min(size.x, size.y, size.z);
     controls.maxDistance = minDimension * 0.3;
-
-    // Optionally, reposition the camera to ensure it's inside the office.
     camera.position.set(0, size.y * 0.5, minDimension * 0.5);
+
+    // ----- Additional GLB Model Loading -----
+    // This model will be integrated into the office interior.
+    const additionalLoader = new GLTFLoader();
+    additionalLoader.load(
+      "/assets/sitdownfoo.glb", // Replace with your GLB model's path
+      (gltf) => {
+        const additionalModel = gltf.scene;
+        // Adjust scale, position, and rotation
+        additionalModel.scale.set(2, 2, 2);
+        additionalModel.position.set(3, 1.1, -0.4);
+        additionalModel.rotation.y = -Math.PI / 2; // Rotate 90° to the right
+
+        // Add a dedicated light to illuminate the additional model
+        const modelLight = new THREE.PointLight(0xffffff, 1, 10);
+        modelLight.position.set(3, 4.1, 0.4); // Adjust this position as needed
+        additionalModel.add(modelLight);
+
+        // Parent the additional model to the office model for integration
+        officeModel.add(additionalModel);
+        console.log("Additional Model Integrated with dedicated light!");
+      },
+      undefined,
+      (error) => {
+        console.error("Error loading additional model:", error);
+      }
+    );
   },
   undefined,
   (error) => {
@@ -125,7 +148,6 @@ loader.load(
 // ----- Font and Title Text Loading -----
 const fontLoader = new FontLoader();
 fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
-  // Helper function to create 3D title text
   const createText = (text, color, position) => {
     const textGeometry = new TextGeometry(text, {
       font: font,
@@ -142,15 +164,12 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     return textMesh;
   };
 
-  // Create the 3 titles within the office interior.
-  // These positions are examples—you may need to adjust them for your layout.
+  // Create 3D titles within the office
   createText("SOCIALS", 0x00008b, { x: 1, y: 0, z: -1 });
   createText("CHART", 0x00008b, { x: 0, y: 0.5, z: 0.5 });
   createText("INFO", 0x00008b, { x: -1, y: 0, z: -0.5 });
 
   // ----- 2D Popup DOM Functions -----
-
-  // Compute the 2D screen position from a 3D object (used for INFO popup)
   function getScreenPosition(object, camera) {
     const vector = new THREE.Vector3();
     object.getWorldPosition(vector);
@@ -160,7 +179,6 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     return { x, y };
   }
 
-  // Create a popup DOM element with content and assign style classes based on title
   function createPopupDom(title) {
     const div = document.createElement("div");
     div.id = "popupDom";
@@ -192,7 +210,6 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     } else if (title === "INFO") {
       div.innerHTML = `
         <p>Crypto Strategic Rewards (CSR) is a pioneering rewards token launching on the Solana blockchain, designed to empower a vibrant community of crypto enthusiasts and investors. Leveraging Solana’s unparalleled speed and low transaction fees, CSR redefines digital incentives by seamlessly integrating decentralized finance with innovative tokenomics.</p>
-       
       `;
     } else if (title === "CHART") {
       div.innerHTML = `
@@ -228,7 +245,6 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     return div;
   }
 
-  // Show (or update) the popup DOM element with content and position it appropriately
   function showPopup(title, screenPos) {
     if (!popupDom) {
       popupDom = createPopupDom(title);
@@ -251,7 +267,6 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
         popupDom.classList.add("popup-info");
         popupDom.innerHTML = `
           <p>Crypto Strategic Rewards (CSR) is a pioneering rewards token launching on the Solana blockchain, designed to empower a vibrant community of crypto enthusiasts and investors. Leveraging Solana’s unparalleled speed and low transaction fees, CSR redefines digital incentives by seamlessly integrating decentralized finance with innovative tokenomics.</p>
-       
         `;
       } else if (title === "CHART") {
         popupDom.classList.add("popup-chart");
@@ -287,7 +302,6 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       }
       currentPopupTitle = title;
     }
-    // Set fixed positions for SOCIALS and CHART; for INFO, use dynamic positioning.
     if (title === "CHART") {
       popupDom.style.right = "20px";
       popupDom.style.bottom = "20px";
@@ -304,7 +318,6 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       popupDom.style.right = "";
       popupDom.style.bottom = "";
     }
-    // Trigger the pop-in animation
     popupDom.getBoundingClientRect();
     popupDom.style.transform = "scale(1)";
     popupDom.style.opacity = "1";
@@ -313,11 +326,20 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
   // ----- Animation Loop -----
   function animate() {
     requestAnimationFrame(animate);
-    // Make the text always face the camera.
+    // Make text always face the camera.
     // biome-ignore lint/complexity/noForEach: <explanation>
         textObjects.forEach((txt) => txt.lookAt(camera.position));
     controls.update();
-    // For desktop, use raycasting on mousemove
+
+    // Clamp only the vertical (y) position within the office interior.
+    if (modelBox) {
+      camera.position.y = THREE.MathUtils.clamp(
+        camera.position.y,
+        modelBox.min.y,
+        modelBox.max.y
+      );
+    }
+
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(textObjects);
     if (intersects.length > 0) {
@@ -328,7 +350,6 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
         showPopup(intersected.name, screenPos);
       }
     }
-    // For INFO, update dynamic position continuously.
     if (popupDom && hoveredObject && currentPopupTitle === "INFO") {
       const screenPos = getScreenPosition(hoveredObject, camera);
       popupDom.style.left = `${screenPos.x}px`;
