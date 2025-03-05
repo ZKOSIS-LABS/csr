@@ -63,16 +63,4 @@ canvas {
     line-height: 17px;
   }
 }
-.popup-chart,
-#dexscreener-embed {
-  position: absolute !important;
-  bottom: 0 !important;
-  right: 0 !important;
-  margin-bottom: -1rem;
-  max-height: 500px;
-  margin-right: 5px;
-  width: 500px !important;
-}
-#chartPopupDom {
-  border: none !important;
-}
+

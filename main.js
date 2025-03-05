@@ -218,7 +218,7 @@ officeLoader.load(
     modelBox = new THREE.Box3().setFromObject(officeModel);
     modelBox.expandByScalar(1000000);
     const minDimension = Math.min(size.x, size.y, size.z);
-    controls.maxDistance = minDimension * 10.3;
+    controls.maxDistance = minDimension * 0.3;
     camera.position.set(0, size.y * 0.5, minDimension * 0.5);
 
     // ----- Additional GLB Model Loading -----
@@ -295,14 +295,15 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     const textMesh = new THREE.Mesh(textGeometry, textMaterial);
     textMesh.position.set(position.x, position.y, position.z);
     textMesh.name = text;
+    textMesh.rotation.y = -Math.PI / 2;
     scene.add(textMesh);
     textObjects.push(textMesh);
     return textMesh;
   };
 
-  createText("SOCIALS", 0x0000800, { x: 2, y: -2, z: 3 });
-  createText("CHART", 0x000000, { x: 3, y: -2.8, z: 0.5 });
-  createText("INFO", 0x000000, { x: -1, y: -1, z: 2 });
+  createText("SOCIALS", 0x00008ff, { x: 3, y: -2.5, z: -0.6 });
+  createText("CHART", 0x0000ff, { x: 5, y: 1, z: -0.4 });
+  createText("INFO", 0x0000ff, { x: 4, y: -0.5, z: -0.4 });
 
   // ----- 2D Popup DOM Functions for SOCIALS and INFO -----
   function getScreenPosition(object, camera) {
@@ -425,7 +426,7 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       transparent: true,
     });
     const plane = new THREE.Mesh(geometry, material);
-    plane.rotation.y = Math.PI;
+    plane.rotation.y = -Math.PI / 2;
     return plane;
   }
 
@@ -518,7 +519,7 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       );
     }
 
-    textObjects.forEach((txt) => txt.lookAt(camera.position));
+   
     controls.update();
 
     raycaster.setFromCamera(mouse, camera);
