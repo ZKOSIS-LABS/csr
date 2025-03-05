@@ -7,7 +7,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 // ----- Scene Setup -----
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
-  45,
+  55,
   window.innerWidth / window.innerHeight,
   0.1,
   100
@@ -29,7 +29,7 @@ controls.enableDamping = true;
 controls.dampingFactor = 0.1;
 
 // Convert 5° to radians (5 * Math.PI / 180)
-const verticalLimit = THREE.MathUtils.degToRad(43);
+const verticalLimit = THREE.MathUtils.degToRad(90);
 
 // Restrict the vertical rotation to a narrow band around the horizontal (π/2)
 controls.minPolarAngle = Math.PI / 2 - verticalLimit;
