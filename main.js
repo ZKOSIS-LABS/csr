@@ -7,12 +7,13 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 // ----- Scene Setup -----
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
-  55,
+  35,
   window.innerWidth / window.innerHeight,
   0.1,
   100
 );
-camera.position.set(0, 0, 9);
+camera.position.set(0, 0, 0);
+camera.rotation.y = Math.PI / 2;
 
 const renderer = new THREE.WebGLRenderer({
   canvas: document.getElementById("scene"),
@@ -165,14 +166,14 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
   };
 
   // Create 3D titles within the office
-  createText("SOCIALS", 0x00008b, { x: 1, y: 0, z: -1 });
-  createText("CHART", 0x00008b, { x: 0, y: 0.5, z: 0.5 });
-  createText("INFO", 0x00008b, { x: -1, y: 0, z: -0.5 });
+  createText("SOCIALS", 0x00008b, { x: 2, y: -2, z: 3 });
+  createText("CHART", 0x00008b, { x: 3, y: -2, z: 0.5 });
+  createText("INFO", 0x00008b, { x: -1, y: -1, z: 2 });
 
   // ----- 2D Popup DOM Functions -----
   function getScreenPosition(object, camera) {
     const vector = new THREE.Vector3();
-    object.getWorldPosition(vector);
+    object.getWorldPosition(vector)
     vector.project(camera);
     const x = ((vector.x + 1) / 2) * window.innerWidth;
     const y = ((1 - vector.y) / 2) * window.innerHeight;
