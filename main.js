@@ -252,6 +252,26 @@ officeLoader.load(
         console.error("Error loading additional model:", error);
       }
     );
+    // ----- Load miner.glb and integrate it within the office model -----
+    const minerLoader = new GLTFLoader(manager);
+    minerLoader.load(
+      "/assets/miner.glb",
+      (gltf) => {
+        const minerModel = gltf.scene;
+        // Adjust the scale, position, and rotation as needed
+        minerModel.scale.set(0.31, 0.31, 0.31);
+        minerModel.position.set(0, 0.5, 3.5); // Modify these values to place the miner correctly within the office
+        // Optional: set a rotation if needed, e.g. minerModel.rotation.y = Math.PI/2;
+        minerModel.rotation.y = Math.PI / 2 - 20;
+        officeModel.add(minerModel);
+        console.log("Miner Model Integrated into Office Model!");
+      },
+      undefined,
+      (error) => {
+        console.error("Error loading miner.glb:", error);
+      }
+    );
+
     // ----- Load cryptizo.glb and place it in front of the additional model -----
     const cryptizoLoader = new GLTFLoader(manager);
     cryptizoLoader.load(
@@ -263,7 +283,7 @@ officeLoader.load(
         cryptizoModel.rotation.y = -Math.PI / 2; // adjust scale if needed
         // Place cryptizoModel in front of additionalModel.
         // Assuming additionalModel’s local forward is along negative z, we offset by 2 units.
-       
+
         cryptizoModel.add();
         officeModel.add(cryptizoModel);
       },
