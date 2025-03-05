@@ -447,13 +447,13 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     div.id = "chartPopupDom";
     Object.assign(div.style, {
       position: "fixed",
-      bottom: "20px",
-      right: "20px",
+      bottom: "-50px",
+      right: "0px",
       width: "450px",
-      height: "300px",
-      backgroundColor: "#fff",
+      height: "400px",
+      backgroundColor: "#000",
       border: "0px solid #000",
-      padding: "10px",
+      padding: "1px",
       zIndex: "1000",
       transform: "scale(0)",
       opacity: "0",
