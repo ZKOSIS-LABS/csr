@@ -101,6 +101,7 @@ let currentPopupTitle = "";
 let popupDom = null; // For SOCIALS & INFO 2D popups
 let infoPopup3D = null; // For 3D INFO popup as a plane
 let teslaMixer = null;
+let ethMixer = null;
 
 // New: For CHART popup as a 2D DOM element
 let chartPopupDom = null;
@@ -311,7 +312,34 @@ teslaLoader.load(
     console.error("Error loading tesla.glb:", error);
   }
 );
+const ethLoader = new GLTFLoader(manager);
+ethLoader.load(
+  "/assets/eth.glb",
+  (gltf) => {
+    const ethModel = gltf.scene;
+    // Adjust the scale, position, and rotation as needed
+    ethModel.scale.set(0.25, 0.25, 0.25);
+    ethModel.position.set(2, 1.4, -1.1); // Modify these values to place the model correctly within the office
 
+    // Add the model to the office model
+    officeModel.add(ethModel);
+    console.log("eth Model Integrated into Office Model!");
+
+    // Set up the AnimationMixer if animations exist
+    if (gltf.animations && gltf.animations.length > 0) {
+      ethMixer = new THREE.AnimationMixer(ethModel);
+      // biome-ignore lint/complexity/noForEach: <explanation>
+      gltf.animations.forEach((clip) => {
+        const action = ethMixer.clipAction(clip);
+        action.play();
+      });
+    }
+  },
+  undefined,
+  (error) => {
+    console.error("Error loading eth.glb:", error);
+  }
+);s
     // ----- Load cryptizo.glb and place it in front of the additional model -----
     const cryptizoLoader = new GLTFLoader(manager);
     cryptizoLoader.load(
@@ -628,6 +656,10 @@ const createText = (text, color, position) => {
    
     if (teslaMixer) {
       teslaMixer.update(delta);
+    }
+ 
+    if (ethMixer) {
+      ethMixer.update(delta);
     }
     // ----- Coin Spawning and Update -----
     const now = performance.now();
