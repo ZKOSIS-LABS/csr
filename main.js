@@ -100,6 +100,7 @@ let hoveredObject = null;
 let currentPopupTitle = "";
 let popupDom = null; // For SOCIALS & INFO 2D popups
 let infoPopup3D = null; // For 3D INFO popup as a plane
+let teslaMixer = null;
 
 // New: For CHART popup as a 2D DOM element
 let chartPopupDom = null;
@@ -281,6 +282,35 @@ officeLoader.load(
         console.error("Error loading miner.glb:", error);
       }
     );
+    // ----- Load miner.glb and integrate it within the office model -----
+const teslaLoader = new GLTFLoader(manager);
+teslaLoader.load(
+  "/assets/tesla.glb",
+  (gltf) => {
+    const teslaModel = gltf.scene;
+    // Adjust the scale, position, and rotation as needed
+    teslaModel.scale.set(1.5, 1.5, 1.5);
+    teslaModel.position.set(0, 0, -5); // Modify these values to place the model correctly within the office
+
+    // Add the model to the office model
+    officeModel.add(teslaModel);
+    console.log("Tesla Model Integrated into Office Model!");
+
+    // Set up the AnimationMixer if animations exist
+    if (gltf.animations && gltf.animations.length > 0) {
+      teslaMixer = new THREE.AnimationMixer(teslaModel);
+      // biome-ignore lint/complexity/noForEach: <explanation>
+      gltf.animations.forEach((clip) => {
+        const action = teslaMixer.clipAction(clip);
+        action.play();
+      });
+    }
+  },
+  undefined,
+  (error) => {
+    console.error("Error loading tesla.glb:", error);
+  }
+);
 
     // ----- Load cryptizo.glb and place it in front of the additional model -----
     const cryptizoLoader = new GLTFLoader(manager);
@@ -536,6 +566,7 @@ const createText = (text, color, position) => {
     if (keys.s)
       camera.position.add(forward.clone().multiplyScalar(-speed * delta));
     if (keys.a)
+      // biome-ignore lint/correctness/noInvalidUseBeforeDeclaration: <explanation>
       camera.position.add(right.clone().multiplyScalar(speed * delta));
     if (keys.d)
       camera.position.add(right.clone().multiplyScalar(-speed * delta));
@@ -593,6 +624,10 @@ const createText = (text, color, position) => {
       infoPopup3D.position.y += 1.3;
               infoPopup3D.position.x += 4.3;
                             infoPopup3D.position.z += 0.3;
+    }
+   
+    if (teslaMixer) {
+      teslaMixer.update(delta);
     }
     // ----- Coin Spawning and Update -----
     const now = performance.now();
