@@ -4,6 +4,10 @@ body {
   overflow: hidden;
   background-color: #000826 !important;
 }
+#loadingScreen {
+  font-family: "Copperplate", sans-serif;
+  text-align: center;
+}
 canvas {
   display: block;
   background-color: #000826 !important;

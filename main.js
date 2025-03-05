@@ -4,6 +4,44 @@ import { FontLoader } from "three/examples/jsm/loaders/FontLoader";
 import { TextGeometry } from "three/examples/jsm/geometries/TextGeometry";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
+// ----- Loading Screen Setup -----
+const loadingScreen = document.createElement("div");
+loadingScreen.id = "loadingScreen";
+Object.assign(loadingScreen.style, {
+  position: "fixed",
+  top: "0",
+  left: "0",
+  width: "100%",
+  height: "100%",
+  backgroundColor: "#000",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "#fff",
+  fontSize: "2em",
+  zIndex: "9999999999999999999999999999999999999999",
+});
+loadingScreen.innerHTML = "Loading <br> 0%";
+document.body.appendChild(loadingScreen);
+
+// ----- Loading Manager -----
+const manager = new THREE.LoadingManager();
+manager.onProgress = (item, loaded, total) => {
+  const progress = Math.round((loaded / total) * 100);
+  loadingScreen.innerHTML = `Loading <br> ${progress}%`;
+};
+manager.onLoad = () => {
+  loadingScreen.style.transition = "opacity 1s";
+  loadingScreen.style.opacity = "0";
+  setTimeout(() => {
+    loadingScreen.remove();
+  }, 1000);
+};
+manager.onError = (url) => {
+  // biome-ignore lint/style/useTemplate: <explanation>
+  console.error("Error loading: " + url);
+};
+
 // ----- Scene Setup -----
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
@@ -39,27 +77,24 @@ const ambientLight = new THREE.AmbientLight(0xffffff, 1);
 scene.add(ambientLight);
 
 // ----- Video Plane Setup -----
-// Create a video element and configure it
 const video = document.createElement("video");
 video.src = "/assets/video.mp4"; // Replace with your video file path
 video.loop = true;
-video.muted = true; // Autoplay generally requires muted video
+video.muted = true; // Autoplay requires muted video in most browsers
 video.play();
 
-// Create a VideoTexture from the video element
 const videoTexture = new THREE.VideoTexture(video);
 videoTexture.minFilter = THREE.LinearFilter;
 videoTexture.magFilter = THREE.LinearFilter;
 videoTexture.format = THREE.RGBFormat;
 
-// Create a plane geometry with a 16:9 aspect ratio (adjust size as needed)
 const videoGeometry = new THREE.PlaneGeometry(4, 2.25);
 const videoMaterial = new THREE.MeshBasicMaterial({
   map: videoTexture,
   side: THREE.DoubleSide,
 });
 const videoPlane = new THREE.Mesh(videoGeometry, videoMaterial);
-videoPlane.position.set(0, 1, -5.5); // Position the video plane in the scene
+videoPlane.position.set(0, 2, -5);
 scene.add(videoPlane);
 
 // ----- Global Variables for Hover, Popup, and Models -----
@@ -158,23 +193,20 @@ renderer.domElement.addEventListener(
 );
 
 // ----- Office Model Loading -----
-const officeLoader = new GLTFLoader();
+const officeLoader = new GLTFLoader(manager);
 officeLoader.load(
   "/assets/ofisi.glb", // Office model path
   (gltf) => {
     officeModel = gltf.scene;
     scene.add(officeModel);
 
-    // Compute the bounding box for the office interior
     modelBox = new THREE.Box3().setFromObject(officeModel);
     const size = modelBox.getSize(new THREE.Vector3());
     console.log("Office Model Loaded!", size);
 
-    // Center the office model
     const center = modelBox.getCenter(new THREE.Vector3());
     officeModel.position.sub(center);
 
-    // Update bounding box after centering:
     modelBox = new THREE.Box3().setFromObject(officeModel);
     modelBox.expandByScalar(1000000);
 
@@ -183,14 +215,14 @@ officeLoader.load(
     camera.position.set(0, size.y * 0.5, minDimension * 0.5);
 
     // ----- Additional GLB Model Loading -----
-    const additionalLoader = new GLTFLoader();
+    const additionalLoader = new GLTFLoader(manager);
     additionalLoader.load(
-      "/assets/sitdownfoo.glb", // Replace with your GLB model's path
+      "/assets/sitdownfoo.glb",
       (gltf) => {
         const additionalModel = gltf.scene;
         additionalModel.scale.set(2, 2, 2);
         additionalModel.position.set(3, 1.1, -0.4);
-        additionalModel.rotation.y = -Math.PI / 2; // Rotate 90° to the right
+        additionalModel.rotation.y = -Math.PI / 2;
 
         const modelLight = new THREE.PointLight(0xffffff, 1, 10);
         modelLight.position.set(3, 4.1, 0.4);
@@ -213,7 +245,7 @@ officeLoader.load(
 
 // ----- Font and Title Text Loading -----
 let loadedFont = null;
-const fontLoader = new FontLoader();
+const fontLoader = new FontLoader(manager);
 fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
   loadedFont = font;
   const createText = (text, color, position) => {
@@ -232,7 +264,6 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     return textMesh;
   };
 
-  // Create 3D titles within the office
   createText("SOCIALS", 0x00008b, { x: 2, y: -2, z: 3 });
   createText("CHART", 0x00008b, { x: 3, y: -2.8, z: 0.5 });
   createText("INFO", 0x00008b, { x: -1, y: -1, z: 2 });
@@ -388,19 +419,21 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
   function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
     const words = text.split(" ");
     let line = "";
+    let currentY = y;
     for (let n = 0; n < words.length; n++) {
-      const testLine = line + words[n] + " ";
+      const testLine = `${line + words[n]} `;
       const metrics = ctx.measureText(testLine);
       const testWidth = metrics.width;
       if (testWidth > maxWidth && n > 0) {
-        ctx.fillText(line, x, y);
+        ctx.fillText(line, x, currentY);
+        // biome-ignore lint/style/useTemplate: <explanation>
         line = words[n] + " ";
-        y += lineHeight;
+        currentY += lineHeight;
       } else {
         line = testLine;
       }
     }
-    ctx.fillText(line, x, y);
+    ctx.fillText(line, x, currentY);
   }
 
   function createInfoPopup3D() {
@@ -480,6 +513,7 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       );
     }
 
+    // biome-ignore lint/complexity/noForEach: <explanation>
     textObjects.forEach((txt) => txt.lookAt(camera.position));
     controls.update();
 
