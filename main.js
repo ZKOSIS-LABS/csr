@@ -314,26 +314,31 @@ let loadedFont = null;
 const fontLoader = new FontLoader(manager);
 fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
   loadedFont = font;
-  const createText = (text, color, position) => {
-    const textGeometry = new TextGeometry(text, {
-      font: font,
-      size: 0.2,
-      height: 0.1,
-      depth: 0.1,
-    });
-    const textMaterial = new THREE.MeshBasicMaterial({ color });
-    const textMesh = new THREE.Mesh(textGeometry, textMaterial);
-    textMesh.position.set(position.x, position.y, position.z);
-    textMesh.name = text;
-    textMesh.rotation.y = -Math.PI / 2;
-    scene.add(textMesh);
-    textObjects.push(textMesh);
-    return textMesh;
-  };
+const createText = (text, color, position) => {
+  const textGeometry = new TextGeometry(text, {
+    font: font,
+    size: 0.2,
+    height: 0.1,
+    depth: 0.1,
+  });
+  const textMaterial = new THREE.MeshBasicMaterial({ color });
+  const textMesh = new THREE.Mesh(textGeometry, textMaterial);
+  textMesh.position.set(position.x, position.y, position.z);
+  textMesh.name = text;
+  // Default rotation for all texts:
+  textMesh.rotation.y = -Math.PI / 2;
+  // If the text is "INFO", rotate it an additional 180°:
+  if (text === "INFO") {
+    textMesh.rotation.y += Math.PI;
+  }
+  scene.add(textMesh);
+  textObjects.push(textMesh);
+  return textMesh;
+};
 
-  createText("SOCIALS", 0x111184, { x: 3, y: -2.5, z: -0.6 });
-  createText("CHART", 0x111184, { x: 5, y: 1, z: -0.4 });
-  createText("INFO", 0x111184, { x: 4, y: -0.5, z: -0.4 });
+  createText("SOCIALS", 0x111184, { x: 3, y: -2.3, z: -0.6 });
+  createText("CHART", 0x111184, { x: 5, y: 0.7, z: -0.4 });
+  createText("INFO", 0x111184, { x: -7.2, y: -0.8, z: -0.4 });
 
   // ----- 2D Popup DOM Functions for SOCIALS and INFO -----
   function getScreenPosition(object, camera) {
@@ -457,6 +462,7 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     });
     const plane = new THREE.Mesh(geometry, material);
     plane.rotation.y = -Math.PI / 2;
+
     return plane;
   }
 
@@ -469,7 +475,9 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     object.getWorldPosition(pos);
     infoPopup3D.position.copy(pos);
     infoPopup3D.position.y += 2.9;
-        infoPopup3D.position.x += 2.9;
+    infoPopup3D.rotation.y += Math.PI;
+        infoPopup3D.position.x += 12.9;
+
   }
 
   // ----- New: 2D CHART Popup as a Fixed DOM Element -----
@@ -582,8 +590,8 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       const pos = new THREE.Vector3();
       hoveredObject.getWorldPosition(pos);
       infoPopup3D.position.copy(pos);
-      infoPopup3D.position.y += -0.3;
-              infoPopup3D.position.x += -1.3;
+      infoPopup3D.position.y += 1.3;
+              infoPopup3D.position.x += 4.3;
                             infoPopup3D.position.z += 0.3;
     }
     // ----- Coin Spawning and Update -----
