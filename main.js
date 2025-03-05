@@ -252,6 +252,26 @@ officeLoader.load(
         console.error("Error loading additional model:", error);
       }
     );
+    // ----- Load cryptizo.glb and place it in front of the additional model -----
+    const cryptizoLoader = new GLTFLoader(manager);
+    cryptizoLoader.load(
+      "/assets/cryptizo.glb",
+      (gltf) => {
+        const cryptizoModel = gltf.scene;
+        cryptizoModel.scale.set(0.8, 0.8, 0.8);
+        cryptizoModel.position.set(2.7, 4.7, -0.2);
+        cryptizoModel.rotation.y = -Math.PI / 2; // adjust scale if needed
+        // Place cryptizoModel in front of additionalModel.
+        // Assuming additionalModel’s local forward is along negative z, we offset by 2 units.
+       
+        cryptizoModel.add();
+        officeModel.add(cryptizoModel);
+      },
+      undefined,
+      (error) => {
+        console.error("Error loading cryptizo.glb", error);
+      }
+    );
   },
   undefined,
   (error) => {
@@ -391,7 +411,7 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     canvas.width = 512;
     canvas.height = 256;
     const context = canvas.getContext("2d");
-    context.fillStyle = "rgba(0, 0, 0, 0.65)";
+    context.fillStyle = "rgba(0, 0, 0, 0.81)";
     context.fillRect(0, 0, canvas.width, canvas.height);
     context.fillStyle = "#fff";
     context.font = "17px Copperplate, sans-serif";
@@ -428,10 +448,10 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       position: "fixed",
       bottom: "20px",
       right: "20px",
-      width: "400px",
+      width: "450px",
       height: "300px",
       backgroundColor: "#fff",
-      border: "1px solid #ccc",
+      border: "0px solid #000",
       padding: "10px",
       zIndex: "1000",
       transform: "scale(0)",

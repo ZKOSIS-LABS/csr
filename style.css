@@ -73,3 +73,6 @@ canvas {
   margin-right: 5px;
   width: 500px !important;
 }
+#chartPopupDom {
+  border: none !important;
+}
