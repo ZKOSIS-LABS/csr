@@ -456,7 +456,6 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     });
     const plane = new THREE.Mesh(geometry, material);
     plane.rotation.y = Math.PI;
-
     return plane;
   }
 
@@ -468,7 +467,9 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     const pos = new THREE.Vector3();
     object.getWorldPosition(pos);
     infoPopup3D.position.copy(pos);
-    infoPopup3D.position.y += 2.9;
+    // Increased vertical offset for higher positioning
+    infoPopup3D.position.y += 1.1;
+    infoPopup3D.position.z += 1.1;
   }
 
   // ----- Animation Loop -----
@@ -544,7 +545,9 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       const pos = new THREE.Vector3();
       hoveredObject.getWorldPosition(pos);
       infoPopup3D.position.copy(pos);
-      infoPopup3D.position.y += 0.5;
+      // Update offset here as well for consistent higher positioning
+      infoPopup3D.position.y += 1.1;
+      infoPopup3D.position.z += 1.1;
     }
     renderer.render(scene, camera);
   }
