@@ -7,13 +7,13 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 // ----- Scene Setup -----
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(
-  35,
+  45,
   window.innerWidth / window.innerHeight,
   0.1,
   100
 );
-camera.position.set(0, 0, 0);
-camera.rotation.y = Math.PI / 2;
+camera.position.set(2, 2, 2);
+// Removed fixed rotation for free movement
 
 const renderer = new THREE.WebGLRenderer({
   canvas: document.getElementById("scene"),
@@ -27,7 +27,6 @@ document.body.appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.1;
-
 // Using a 180° vertical limit (no horizontal restriction)
 const verticalLimit = THREE.MathUtils.degToRad(180);
 controls.minPolarAngle = Math.PI / 2 - verticalLimit;
@@ -48,18 +47,52 @@ const textObjects = [];
 
 let hoveredObject = null;
 let currentPopupTitle = "";
-let popupDom = null;
+let popupDom = null; // For DOM-based popups (SOCIALS & CHART)
+let infoPopup3D = null; // For 3D INFO popup as a plane
 
 let modelBox = null; // Bounding box for the office model
 let officeModel = null; // Global office model reference
 
-// Update mouse vector for desktop
+// ----- WASD Movement Setup -----
+const keys = { w: false, a: false, s: false, d: false };
+window.addEventListener("keydown", (event) => {
+  switch (event.key.toLowerCase()) {
+    case "w":
+      keys.w = true;
+      break;
+    case "a":
+      keys.a = true;
+      break;
+    case "s":
+      keys.s = true;
+      break;
+    case "d":
+      keys.d = true;
+      break;
+  }
+});
+window.addEventListener("keyup", (event) => {
+  switch (event.key.toLowerCase()) {
+    case "w":
+      keys.w = false;
+      break;
+    case "a":
+      keys.a = false;
+      break;
+    case "s":
+      keys.s = false;
+      break;
+    case "d":
+      keys.d = false;
+      break;
+  }
+});
+
+// ----- Mouse/Touch Events for Popup Interaction -----
 window.addEventListener("mousemove", (event) => {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
   mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 });
-
-// For mobile: attach touch events
 renderer.domElement.addEventListener(
   "touchstart",
   (event) => {
@@ -72,13 +105,24 @@ renderer.domElement.addEventListener(
       if (intersects.length > 0) {
         hoveredObject = intersects[0].object;
         const screenPos = getScreenPosition(hoveredObject, camera);
-        showPopup(hoveredObject.name, screenPos);
+        if (hoveredObject.name === "INFO") {
+          showInfoPopup3D(hoveredObject);
+          if (popupDom) {
+            document.body.removeChild(popupDom);
+            popupDom = null;
+          }
+        } else {
+          if (infoPopup3D) {
+            scene.remove(infoPopup3D);
+            infoPopup3D = null;
+          }
+          showPopup(hoveredObject.name, screenPos);
+        }
       }
     }
   },
   false
 );
-
 renderer.domElement.addEventListener(
   "touchmove",
   (event) => {
@@ -108,11 +152,15 @@ officeLoader.load(
     const center = modelBox.getCenter(new THREE.Vector3());
     officeModel.position.sub(center);
 
-    // Set camera limits based on interior dimensions
-    const minDimension = Math.min(size.x, size.y, size.z);
-    controls.maxDistance = minDimension * 0.3;
-    camera.position.set(0, size.y * 0.5, minDimension * 0.5);
+    // Update bounding box after centering:
+    modelBox = new THREE.Box3().setFromObject(officeModel);
+    // Expand the bounding box to give the camera more freedom (increase by 1 unit in all directions)
+    modelBox.expandByScalar(1000000);
 
+    const minDimension = Math.min(size.x, size.y, size.z);
+    controls.maxDistance = minDimension * 10.3;
+    camera.position.set(0, size.y * 0.5, minDimension * 0.5);
+    
     // ----- Additional GLB Model Loading -----
     // This model will be integrated into the office interior.
     const additionalLoader = new GLTFLoader();
@@ -127,7 +175,7 @@ officeLoader.load(
 
         // Add a dedicated light to illuminate the additional model
         const modelLight = new THREE.PointLight(0xffffff, 1, 10);
-        modelLight.position.set(3, 4.1, 0.4); // Adjust this position as needed
+        modelLight.position.set(3, 4.1, 0.4); // Adjust as needed
         additionalModel.add(modelLight);
 
         // Parent the additional model to the office model for integration
@@ -147,8 +195,10 @@ officeLoader.load(
 );
 
 // ----- Font and Title Text Loading -----
+let loadedFont = null;
 const fontLoader = new FontLoader();
 fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
+  loadedFont = font;
   const createText = (text, color, position) => {
     const textGeometry = new TextGeometry(text, {
       font: font,
@@ -167,13 +217,13 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
 
   // Create 3D titles within the office
   createText("SOCIALS", 0x00008b, { x: 2, y: -2, z: 3 });
-  createText("CHART", 0x00008b, { x: 3, y: -2, z: 0.5 });
+  createText("CHART", 0x00008b, { x: 3, y: -2.8, z: 0.5 });
   createText("INFO", 0x00008b, { x: -1, y: -1, z: 2 });
 
-  // ----- 2D Popup DOM Functions -----
+  // ----- 2D Popup DOM Functions for SOCIALS and CHART -----
   function getScreenPosition(object, camera) {
     const vector = new THREE.Vector3();
-    object.getWorldPosition(vector)
+    object.getWorldPosition(vector);
     vector.project(camera);
     const x = ((vector.x + 1) / 2) * window.innerWidth;
     const y = ((1 - vector.y) / 2) * window.innerHeight;
@@ -194,10 +244,10 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     div.classList.add("popup");
     if (title === "SOCIALS") {
       div.classList.add("popup-socials");
-    } else if (title === "INFO") {
-      div.classList.add("popup-info");
     } else if (title === "CHART") {
       div.classList.add("popup-chart");
+    } else if (title === "INFO") {
+      div.classList.add("popup-info");
     }
     if (title === "SOCIALS") {
       div.innerHTML = `
@@ -264,11 +314,6 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
             <img src="/X.png" alt="Info Image" style="width:80px; height:auto;">
           </a>
         `;
-      } else if (title === "INFO") {
-        popupDom.classList.add("popup-info");
-        popupDom.innerHTML = `
-          <p>Crypto Strategic Rewards (CSR) is a pioneering rewards token launching on the Solana blockchain, designed to empower a vibrant community of crypto enthusiasts and investors. Leveraging Solana’s unparalleled speed and low transaction fees, CSR redefines digital incentives by seamlessly integrating decentralized finance with innovative tokenomics.</p>
-        `;
       } else if (title === "CHART") {
         popupDom.classList.add("popup-chart");
         popupDom.innerHTML = `
@@ -298,11 +343,10 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
             <iframe src="https://dexscreener.com/solana/Czfq3xZZDmsdGdUyrNLtRhGc47cXcZtLG4crryfu44zE?embed=1&loadChartSettings=0&trades=0&tabs=0&info=0&chartLeftToolbar=0&chartDefaultOnMobile=1&chartTheme=dark&theme=dark&chartStyle=0&chartType=usd&interval=15"></iframe>
           </div>
         `;
-      } else {
-        popupDom.innerHTML = `<p>Popup for ${title}</p>`;
       }
       currentPopupTitle = title;
     }
+    // Set fixed positions for SOCIALS and CHART; dynamic for others.
     if (title === "CHART") {
       popupDom.style.right = "20px";
       popupDom.style.bottom = "20px";
@@ -324,23 +368,116 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     popupDom.style.opacity = "1";
   }
 
+  // ----- 3D INFO Popup as a Plane -----
+  function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+    const words = text.split(" ");
+    let line = "";
+    for (let n = 0; n < words.length; n++) {
+      // biome-ignore lint/style/useTemplate: <explanation>
+      const testLine = line + words[n] + " ";
+      const metrics = ctx.measureText(testLine);
+      const testWidth = metrics.width;
+      if (testWidth > maxWidth && n > 0) {
+        ctx.fillText(line, x, y);
+        // biome-ignore lint/style/useTemplate: <explanation>
+        line = words[n] + " ";
+        y += lineHeight;
+      } else {
+        line = testLine;
+      }
+    }
+    ctx.fillText(line, x, y);
+  }
+
+  function createInfoPopup3D() {
+    const canvas = document.createElement("canvas");
+    canvas.width = 512;
+    canvas.height = 256;
+    const context = canvas.getContext("2d");
+    // Draw background
+    context.fillStyle = "rgba(34,34,34,0.9)";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    // Draw text
+    context.fillStyle = "#fff";
+    context.font = "20px sans-serif";
+    const infoText =
+      "Crypto Strategic Rewards (CSR) is a pioneering rewards token launching on the Solana blockchain, designed to empower a vibrant community of crypto enthusiasts and investors. Leveraging Solana’s unparalleled speed and low transaction fees, CSR redefines digital incentives by seamlessly integrating decentralized finance with innovative tokenomics.";
+    wrapText(context, infoText, 10, 30, canvas.width - 20, 25);
+    const texture = new THREE.CanvasTexture(canvas);
+    const geometry = new THREE.PlaneGeometry(3, 1.5);
+    const material = new THREE.MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+    });
+    const plane = new THREE.Mesh(geometry, material);
+    // Rotate the plane 180° around the Y-axis
+    plane.rotation.y = Math.PI;
+    return plane;
+  }
+
+  function showInfoPopup3D(object) {
+    if (!infoPopup3D) {
+      infoPopup3D = createInfoPopup3D();
+      scene.add(infoPopup3D);
+    }
+    // Position the 3D INFO popup near the INFO title's world position.
+    const pos = new THREE.Vector3();
+    object.getWorldPosition(pos);
+    infoPopup3D.position.copy(pos);
+    infoPopup3D.position.y += 0.5; // Adjust vertical offset as needed
+  }
+
   // ----- Animation Loop -----
+  let lastTime = performance.now();
   function animate() {
     requestAnimationFrame(animate);
-    // Make text always face the camera.
-    // biome-ignore lint/complexity/noForEach: <explanation>
-        textObjects.forEach((txt) => txt.lookAt(camera.position));
-    controls.update();
+    // WASD movement update using world-space relative to camera's orientation:
+    const currentTime = performance.now();
+    const delta = (currentTime - lastTime) / 1000; // seconds
+    lastTime = currentTime;
+    const speed = 4; // Increased speed for more freedom
 
-    // Clamp only the vertical (y) position within the office interior.
+    // Calculate forward and right vectors based on camera direction.
+    const forward = new THREE.Vector3();
+    camera.getWorldDirection(forward);
+    forward.y = 0; // remove vertical component for horizontal movement
+    forward.normalize();
+    const right = new THREE.Vector3();
+    right.crossVectors(forward, new THREE.Vector3(0, 2, 0)).normalize();
+
+    if (keys.w)
+      camera.position.add(forward.clone().multiplyScalar(speed * delta));
+    if (keys.s)
+      camera.position.add(forward.clone().multiplyScalar(-speed * delta));
+    if (keys.a)
+      camera.position.add(right.clone().multiplyScalar(speed * delta));
+    if (keys.d)
+      camera.position.add(right.clone().multiplyScalar(-speed * delta));
+
+    // Clamp camera position within the office model's bounding box.
     if (modelBox) {
+      camera.position.x = THREE.MathUtils.clamp(
+        camera.position.x,
+        modelBox.min.x,
+        modelBox.max.x
+      );
       camera.position.y = THREE.MathUtils.clamp(
         camera.position.y,
         modelBox.min.y,
         modelBox.max.y
       );
+      camera.position.z = THREE.MathUtils.clamp(
+        camera.position.z,
+        modelBox.min.z,
+        modelBox.max.z
+      );
     }
 
+    // biome-ignore lint/complexity/noForEach: <explanation>
+    textObjects.forEach((txt) => txt.lookAt(camera.position));
+    controls.update();
+
+    // Raycaster for title detection (for desktop)
     raycaster.setFromCamera(mouse, camera);
     const intersects = raycaster.intersectObjects(textObjects);
     if (intersects.length > 0) {
@@ -348,13 +485,27 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
       if (!hoveredObject || hoveredObject.name !== intersected.name) {
         hoveredObject = intersected;
         const screenPos = getScreenPosition(intersected, camera);
-        showPopup(intersected.name, screenPos);
+        if (intersected.name === "INFO") {
+          showInfoPopup3D(intersected);
+          if (popupDom) {
+            document.body.removeChild(popupDom);
+            popupDom = null;
+          }
+        } else {
+          if (infoPopup3D) {
+            scene.remove(infoPopup3D);
+            infoPopup3D = null;
+          }
+          showPopup(intersected.name, screenPos);
+        }
       }
     }
-    if (popupDom && hoveredObject && currentPopupTitle === "INFO") {
-      const screenPos = getScreenPosition(hoveredObject, camera);
-      popupDom.style.left = `${screenPos.x}px`;
-      popupDom.style.top = `${screenPos.y + 20}px`;
+    // For INFO, update its 3D popup position continuously.
+    if (infoPopup3D && hoveredObject && hoveredObject.name === "INFO") {
+      const pos = new THREE.Vector3();
+      hoveredObject.getWorldPosition(pos);
+      infoPopup3D.position.copy(pos);
+      infoPopup3D.position.y += 0.5;
     }
     renderer.render(scene, camera);
   }
