@@ -101,7 +101,9 @@ let currentPopupTitle = "";
 let popupDom = null; // For SOCIALS & INFO 2D popups
 let infoPopup3D = null; // For 3D INFO popup as a plane
 let teslaMixer = null;
+let tesla2Mixer = null;
 let ethMixer = null;
+let bidenMixer = null;
 
 // New: For CHART popup as a 2D DOM element
 let chartPopupDom = null;
@@ -291,7 +293,51 @@ officeLoader.load(
         console.error("Error loading tesla.glb:", error);
       }
     );
-
+    const tesla2Loader = new GLTFLoader(manager);
+    tesla2Loader.load(
+      "/assets/tesla.glb",
+      (gltf) => {
+        const tesla2Model = gltf.scene;
+        tesla2Model.scale.set(1.5, 1.5, 1.5);
+        tesla2Model.position.set(0, 0, 4);
+        tesla2Model.rotation.y = Math.PI;
+        officeModel.add(tesla2Model);
+        console.log("Tesla2 Model Integrated into Office Model!");
+        if (gltf.animations && gltf.animations.length > 0) {
+          tesla2Mixer = new THREE.AnimationMixer(tesla2Model);
+          gltf.animations.forEach((clip) => {
+            const action = tesla2Mixer.clipAction(clip);
+            action.play();
+          });
+        }
+      },
+      undefined,
+      (error) => {
+        console.error("Error loading tesla.glb:", error);
+      }
+    );
+        const bidenLoader = new GLTFLoader(manager);
+        bidenLoader.load(
+          "/assets/biden.glb",
+          (gltf) => {
+            const bidenModel = gltf.scene;
+            bidenModel.scale.set(1.5, 1.5, 1.5);
+            bidenModel.position.set(1, 0, -5);
+            officeModel.add(bidenModel);
+            console.log("biden Model Integrated into Office Model!");
+            if (gltf.animations && gltf.animations.length > 0) {
+              bidenMixer = new THREE.AnimationMixer(bidenModel);
+              gltf.animations.forEach((clip) => {
+                const action = bidenMixer.clipAction(clip);
+                action.play();
+              });
+            }
+          },
+          undefined,
+          (error) => {
+            console.error("Error loading biden.glb:", error);
+          }
+        );
     // ----- Load eth.glb and integrate it within the office model -----
     const ethLoader = new GLTFLoader(manager);
     ethLoader.load(
@@ -663,6 +709,12 @@ $CSR is a rewards token that yields SOL, ETH, and BTC purely by holding.
     if (teslaMixer) {
       teslaMixer.update(delta);
     }
+        if (bidenMixer) {
+          bidenMixer.update(delta);
+        }
+        if (tesla2Mixer) {
+          tesla2Mixer.update(delta);
+        }
     if (ethMixer) {
       ethMixer.update(delta);
     }
