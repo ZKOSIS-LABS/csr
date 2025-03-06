@@ -445,10 +445,10 @@ fontLoader.load("/assets/helvetiker_regular.typeface.json", (font) => {
     if (title === "SOCIALS") {
       div.classList.add("popup-socials");
       div.innerHTML = `
-        <a href="https://telegram.org" target="_blank" style="color:#5f7396;">
+        <a href="https://t.me/cryptostrategic_sol" target="_blank" style="color:#5f7396;">
           <img src="/tg.png" alt="Info Image" style="width:80px; height:auto;">
         </a>
-        <a href="https://twitter.com" target="_blank" style="color:#5f7396;">
+        <a href="https://x.com/CSROfficialCoin" target="_blank" style="color:#5f7396;">
           <img src="/X.png" alt="Info Image" style="width:80px; height:auto;">
         </a>
       `;
@@ -483,10 +483,10 @@ $CSR is a rewards token that yields SOL, ETH, and BTC purely by holding.
       if (title === "SOCIALS") {
         popupDom.classList.add("popup-socials");
         popupDom.innerHTML = `
-          <a href="https://telegram.org" target="_blank" style="color:#5f7396;">
+          <a href="https://t.me/cryptostrategic_sol" target="_blank" style="color:#5f7396;">
             <img src="/tg.png" alt="Info Image" style="width:80px; height:auto;">
           </a>
-          <a href="https://twitter.com" target="_blank" style="color:#5f7396;">
+          <a href="https://x.com/CSROfficialCoin" target="_blank" style="color:#5f7396;">
             <img src="/X.png" alt="Info Image" style="width:80px; height:auto;">
           </a>
         `;
