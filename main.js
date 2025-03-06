@@ -25,14 +25,14 @@ Object.assign(loadingScreen.style, {
   fontSize: "2em",
   zIndex: "9999999999999999999999999999999999999999",
 });
-loadingScreen.innerHTML = "Loading <br> 0%";
+loadingScreen.innerHTML = "0%";
 document.body.appendChild(loadingScreen);
 
 // ----- Loading Manager -----
 const manager = new THREE.LoadingManager();
 manager.onProgress = (item, loaded, total) => {
   const progress = Math.round((loaded / total) * 100);
-  loadingScreen.innerHTML = `<br> ${progress}%`;
+  loadingScreen.innerHTML = `${progress}%`;
 };
 manager.onLoad = () => {
   loadingScreen.style.transition = "opacity 1s";
