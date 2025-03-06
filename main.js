@@ -324,7 +324,9 @@ officeLoader.load(
             bidenModel.scale.set(1.5, 1.5, 1.5);
             bidenModel.position.set(1, 0, -5);
             officeModel.add(bidenModel);
+                         
             console.log("biden Model Integrated into Office Model!");
+
             if (gltf.animations && gltf.animations.length > 0) {
               bidenMixer = new THREE.AnimationMixer(bidenModel);
               gltf.animations.forEach((clip) => {
@@ -333,11 +335,15 @@ officeLoader.load(
               });
             }
           },
+          
           undefined,
           (error) => {
             console.error("Error loading biden.glb:", error);
           }
         );
+               modelLight.position.set(1, 1, -4);
+               officeModel.add(modelLight);
+
     // ----- Load eth.glb and integrate it within the office model -----
     const ethLoader = new GLTFLoader(manager);
     ethLoader.load(
