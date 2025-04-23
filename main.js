@@ -595,10 +595,10 @@ $CSR is a rewards token that yields SOL, ETH, and BTC purely by holding.
       transition: "transform 0.5s ease-out, opacity 0.5s ease-out",
     });
     div.innerHTML = `
-  <iframe id="dextswap-aggregator-widget"
-    title="DEXTswap Aggregator"
-    width="400" height="420"
-    src="https://www.dextools.io/widget-aggregator/en/swap/solana/7nhqCm3w4HPCN28Q97t3iW8dx674KutHNXEdYi8NA4sy"></iframe>
+  <iframe id="dextools-widget"
+    title="DEXTools Trading Chart"
+    width="500" height="400"
+    src="https://www.dextools.io/widget-chart/en/solana/pe-light/5hMMdyNcSo6frYew2q9454dJz5PgE9CPYtvfYWYvfxtU?theme=light&chartType=2&chartResolution=30&drawingToolbars=false"></iframe>
       <button id="chartCloseBtn" style="
         position: absolute;
         top: 5px;
