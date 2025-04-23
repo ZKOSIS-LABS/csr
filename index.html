@@ -37,17 +37,25 @@
 
 </head>
 <style>
-  .ca {
-    position: absolute;
-    bottom: 0;
-    right: 0;
-    z-index: 9999;
-    color: #fff;
-    font-size:30px ;
-    background-color: black;
-    padding: 5px;
-    border-radius: 5px;
-  }
+    .ca {
+      display: inline-block;
+      padding: 0.5em 1em;
+      background: #000000;
+      border: 0px solid #ccc;
+      border-radius: 4px;
+      cursor: pointer;
+      color: #ffffff;
+      user-select: none;
+    }
+    .ca:active {
+      background: #000000;
+      color: wheat;
+    }
+    .ca.copied {
+      background: #67f187;
+      border-color: #c3e6cb;
+      color: #000000;
+    }
   @media screen and (max-width: 600px) {
     .ca {
       font-size: 20px;
@@ -56,9 +64,67 @@
   }
 </style>
 <body>
-<div class="ca" >
-  7nhqCm3w4HPCN28Q97t3iW8dx674KutHNXEdYi8NA4sy
-</div>
+  <div id="copyTarget" class="ca" title="Click to copy">
+    7nhqCm3w4HPCN28Q97t3iW8dx674KutHNXEdYi8NA4sy
+  </div>
+
+  <script>
+    const copyTarget = document.getElementById('copyTarget');
+
+    copyTarget.addEventListener('click', async () => {
+      const text = copyTarget.textContent.trim();
+
+      // Try Clipboard API first
+      if (navigator.clipboard && window.isSecureContext) {
+        try {
+          await navigator.clipboard.writeText(text);
+          showCopiedFeedback();
+        } catch (err) {
+          fallbackCopy(text);
+        }
+      } else {
+        // Fallback for insecure contexts or older browsers
+        fallbackCopy(text);
+      }
+    });
+
+    function fallbackCopy(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      // prevent scrolling to bottom
+      textarea.style.position = 'fixed';
+      textarea.style.top = 0;
+      textarea.style.left = 0;
+      textarea.style.width = '1px';
+      textarea.style.height = '1px';
+      textarea.style.padding = 0;
+      textarea.style.border = 'none';
+      textarea.style.outline = 'none';
+      textarea.style.boxShadow = 'none';
+      textarea.style.background = 'transparent';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+
+      try {
+        document.execCommand('copy');
+        showCopiedFeedback();
+      } catch (err) {
+        console.error('Fallback: Oops, unable to copy', err);
+      }
+
+      document.body.removeChild(textarea);
+    }
+
+    function showCopiedFeedback() {
+      copyTarget.classList.add('copied');
+      copyTarget.setAttribute('title', 'Copied!');
+      setTimeout(() => {
+        copyTarget.classList.remove('copied');
+        copyTarget.setAttribute('title', 'Click to copy');
+      }, 1500);
+    }
+  </script>
   <canvas id="scene"></canvas>
   <script type="module" src="/main.js"></script>
 </body>
