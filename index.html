@@ -29,8 +29,6 @@
     
     <!-- Meta Tags Generated with https://metatags.io -->
   <link rel="stylesheet" href="style.css">
-  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
-  <script nomodule="" src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.js"></script>
   <link rel="shortcut icon" href="/favi.png" type="image/x-icon">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <!-- Primary Meta Tags -->
@@ -40,13 +38,7 @@
 </head>
 
 <body>
-  <div class="model-viewer">
-    <model-viewer
-      style="height: 200px; width:200px;  background-color: rgba(0, 0, 0, 0) !important; z-index: 9999999999999 !important;"
-       shadow-intensity="2" auto-rotate="" camera-controls=""  shadow-softness="0.68" src="/assets/csr.glb" alt="A 3D model of a text">
 
-    </model-viewer>
-  </div>
   <canvas id="scene"></canvas>
   <script type="module" src="/main.js"></script>
 </body>
